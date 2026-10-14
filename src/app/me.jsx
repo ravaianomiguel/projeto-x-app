@@ -1,20 +1,39 @@
-import { Text, View, StyleSheet } from "react-native";
-import { Link } from "expo-router";
+import { Text, StyleSheet } from "react-native";
+import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
+import Tela from "../components/Tela";
+import Botao from "../components/Botao";
+import Perfil from "../components/Perfil";
 
-export default function Index() {
+// Aba "Eu": perfil do usuário logado, ou opções de login/cadastro.
+// Por enquanto "logado" é uma constante: troque para true/false para testar
+// as duas versões da tela. Depois será lido de onde guardarmos o login.
+const logado = true;
+const meuUsername = "miguel";
+
+export default function Me() {
+  const router = useRouter();
+
+  if (logado) {
+    return (
+      <Tela>
+        <Perfil username={meuUsername} proprio />
+      </Tela>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Vou verificar se voce está logado</Text>
-      <Link href="/auth/login">Nao estou logado</Link>
-      <Link href="/profile/miguel">Estou Logado</Link>
-    </View>
+    <Tela>
+      <Text style={styles.texto}>Você não está logado.</Text>
+      <Botao titulo="Entrar" onPress={() => router.push("/auth/login")} />
+      <Botao titulo="Cadastrar" onPress={() => router.push("/auth/register")} />
+    </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  texto: {
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: "center",
   },
 });

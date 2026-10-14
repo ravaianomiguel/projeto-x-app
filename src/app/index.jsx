@@ -1,22 +1,26 @@
-import { Text, View, StyleSheet } from "react-native";
-import { Link } from "expo-router";
-import Tutorial from "../components/Tuorial.jsx"
+import { StyleSheet, Text } from "react-native";
+import Tela from "../components/Tela";
+import Tutorial from "../components/Tutorial";
+import { cores } from "../data/cores";
+import { tutoriais } from "../data/mock";
 
+// Aba "Home": feed com todos os tutoriais.
 export default function Index() {
   return (
-    <View style={styles.container}>
-      <Text>Feed</Text>
-      <Tutorial id={1}></Tutorial>
-      <Link href="tutorial/2">tutorial 2</Link>
-      <Link href="tutorial/3">tutorial 3</Link>
-    </View>
+    <Tela>
+      <Text style={styles.titulo}>Feed</Text>
+      {tutoriais.map((t) => (
+        <Tutorial key={t.id} tutorial={t} />
+      ))}
+    </Tela>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  titulo: {
+    color: cores.primaria,
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 12,
   },
 });

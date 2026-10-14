@@ -1,19 +1,16 @@
-import { Text, View, StyleSheet } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router"; // [NÃO BÁSICO] ver nota abaixo
+import Tela from "../../components/Tela";
+import Perfil from "../../components/Perfil";
 
-export default function Index() {
-  const {user} = useLocalSearchParams();
+// Perfil de qualquer usuário: rota /profile/<username>.
+// NOTA: useLocalSearchParams (expo-router) devolve os parâmetros da rota.
+// Como o arquivo se chama [user].jsx, o valor da URL vem em `user`
+// (em /profile/ana_croche, user === "ana_croche"). Sempre chega como texto.
+export default function PerfilUsuario() {
+  const { user } = useLocalSearchParams();
   return (
-    <View style={styles.container}>
-      <Text>Perfil de {user}</Text>
-    </View>
+    <Tela voltar>
+      <Perfil username={user} />
+    </Tela>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
