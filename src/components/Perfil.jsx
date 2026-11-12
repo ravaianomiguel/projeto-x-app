@@ -1,24 +1,47 @@
+import { useState, useCallback } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { cores } from "../data/cores";
-import { getUsuario, interacoesDoUsuario, tutoriaisDoUsuario } from "../data/mock";
+import { getUsuario, interacoesDoUsuario, tutoriaisDoUsuario } from "../utils/apiAccess";
 import Botao from "./Botao";
 import Interacao from "./Interacao";
 import Tutorial from "./Tutorial";
+import { logout } from "../utils/misc";
 
 // Conteúdo de um perfil: dados do usuário + seus tutoriais + suas interações.
 // Usado em /profile/[user] (perfil de qualquer usuário) e em /me (perfil próprio).
 // Props:
 //   username = qual usuário mostrar
 //   proprio  = true quando é o perfil do usuário logado (mostra "Editar perfil")
-export default function Perfil({ username, proprio = false }) {
-  const usuario = getUsuario(username);
+export default function Perfil({ id, proprio = false }) {
+  const router = useRouter();
+  const [usuario, setUsuario] = useState(null);
+  const [tutoriais, setTutoriais] = useState(null);
+  const [interacoes, setInteracoes] = useState(null);
+  const [carregando, setCarregando] = useState(true);
 
-  if (!usuario) {
-    return <Text>Usuário não encontrado: {username}</Text>;
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        const usu = await getUsuario(id);
+        const tuts = await tutoriaisDoUsuario(id);
+        const ints = await interacoesDoUsuario(id);
+        setUsuario(usu);
+        setTutoriais(tuts);
+        setInteracoes(ints);
+        setCarregando(false);
+      };
+      load();
+    }, [id])
+  );
+
+  if (carregando) {
+    return <Text>Carregando...</Text>;
   }
 
-  const tutoriais = tutoriaisDoUsuario(username);
-  const interacoes = interacoesDoUsuario(username);
+  if (!usuario) {
+    return <Text>Usuário não encontrado: {id}</Text>;
+  }
 
   return (
     <View>
@@ -27,19 +50,23 @@ export default function Perfil({ username, proprio = false }) {
         <Text style={styles.nome}>{usuario.realname}</Text>
         <Text style={styles.username}>@{usuario.username}</Text>
         <Text style={styles.bio}>{usuario.biography}</Text>
-        {/* onPress vazio: ainda não existe edição (será PATCH /usuarios) */}
-        {proprio && <Botao titulo="Editar perfil" onPress={() => {}} />}
+        {proprio && 
+        <View style={styles.buttons}>
+          <Botao titulo="Editar perfil" onPress={() => router.replace("/auth/register")} />
+          <Botao titulo="Sair" onPress={() => {logout(), router.replace("/")}} />
+        </View>
+        }
       </View>
 
       <Text style={styles.secao}>Tutoriais</Text>
-      {tutoriais.length === 0 && <Text style={styles.vazio}>Nenhum tutorial ainda.</Text>}
-      {tutoriais.map((t) => (
+      {tutoriais && tutoriais.length === 0 && <Text style={styles.vazio}>Nenhum tutorial ainda.</Text>}
+      {tutoriais && tutoriais.map((t) => (
         <Tutorial key={t.id} tutorial={t} />
       ))}
 
       <Text style={styles.secao}>Interações</Text>
-      {interacoes.length === 0 && <Text style={styles.vazio}>Nenhuma interação ainda.</Text>}
-      {interacoes.map((i) => (
+      {interacoes && interacoes.length === 0 && <Text style={styles.vazio}>Nenhuma interação ainda.</Text>}
+      {interacoes && interacoes.map((i) => (
         <Interacao key={i.id} interacao={i} mostrarAutor={false} />
       ))}
     </View>
@@ -80,5 +107,9 @@ const styles = StyleSheet.create({
   vazio: {
     color: "#71717a",
     marginBottom: 12,
+  },
+  buttons: {
+    flexDirection: "row",
+    gap: 10
   },
 });

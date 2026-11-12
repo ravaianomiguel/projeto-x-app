@@ -1,31 +1,107 @@
-import { Link, useRouter } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
+import { Link, useFocusEffect, useRouter } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
+import { useState, useCallback } from "react";
 import { StyleSheet, Text, TextInput } from "react-native";
 import Botao from "../../components/Botao";
 import Tela from "../../components/Tela";
 import { cores } from "../../data/cores";
+import { getUsuario, registro } from "../../utils/apiAccess";
+import { storageGet } from "../../utils/secureStore";
 
-// Cadastro. Os maxLength seguem o modelo de dados (username 10, realname 100,
-// biography 1000). Depois será POST /registrar. A foto de perfil ficou de fora
-// por enquanto (precisa de seletor de imagem, que não é básico).
-// multiline permite várias linhas no campo de biografia.
 export default function Register() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [nome, setNome] = useState("");
+  const [biografia, setBiografia] = useState("");
+  const [senha, setSenha] = useState("");
+  const [logado, setLogado] = useState(false);
+  const [carregando, setCarregando] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [msgColor, setMsgColor] = useState("black");
+  const [id, setId] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      const checkLogin = async () => {
+        const resLogado = await storageGet("logado");
+        if (resLogado.ok && resLogado.val) {
+          setLogado(true);
+          const uId = await storageGet("usuarioId");
+          const user = await getUsuario(uId.val);
+          setId(uId.val);
+          setUsername(user.username);
+          setBiografia(user.biografia);
+          setNome(user.realname);
+        } 
+        setCarregando(false);
+      };
+      checkLogin();
+    }, [])
+  );
+
+  const regStatus = async () => {
+    const status = await registro({
+      username, senha, id,
+      realname: nome,
+      biography: biografia,
+    }, logado);
+    if(!status.ok) {
+      console.log(id)
+      setMsg(status.message);
+      setMsgColor("red");
+    } else if(logado) router.replace("/me");
+    else router.replace("/auth/login");
+  }
+
+  if (carregando) {
+    return (
+      <Tela voltar>
+        <Text style={styles.texto}>Carregando...</Text>
+      </Tela>
+    );
+  }
+
   return (
     <Tela voltar>
-      <Text style={styles.titulo}>Cadastro</Text>
-      <TextInput style={styles.input} placeholder="Username" maxLength={10} autoCapitalize="none" />
-      <TextInput style={styles.input} placeholder="Nome" maxLength={100} />
+      <Text style={styles.titulo}>{logado ? "Editar Perfil" : "Cadastro"}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        maxLength={10}
+        autoCapitalize="none"
+        value={username}
+        onChangeText={setUsername}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Nome"
+        maxLength={100}
+        value={nome}
+        onChangeText={setNome}
+      />
       <TextInput
         style={[styles.input, styles.bio]}
         placeholder="Biografia"
         maxLength={1000}
         multiline
+        value={biografia}
+        onChangeText={setBiografia}
       />
-      <TextInput style={styles.input} placeholder="Senha" secureTextEntry />
-      <Botao titulo="Cadastrar" onPress={() => router.replace("/auth/login")} />
-      <Link href="/auth/login" style={styles.link}>
+      {!logado && <TextInput
+        style={styles.input}
+        placeholder="Senha"
+        secureTextEntry
+        value={senha}
+        onChangeText={setSenha}
+      />}
+      {msg && <Text style={{color: msgColor}}>{msg}</Text>}
+      <Botao titulo={logado ? "Editar Perfil" : "Cadastrar"} onPress={() => {
+        setMsg("Concluindo...");
+        setMsgColor("black");
+        regStatus();
+      }} />
+      {!logado && <Link href="/auth/login" style={styles.link}>
         Já tem conta?
-      </Link>
+      </Link>}
     </Tela>
   );
 }

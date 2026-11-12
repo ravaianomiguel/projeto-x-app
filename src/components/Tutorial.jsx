@@ -1,19 +1,36 @@
 import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver Tela.jsx, nota 2
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { cores } from "../data/cores";
+import { getUsuario } from "../utils/apiAccess";
 
 // Mini tutorial (card). Usado no feed, na pesquisa e no perfil.
 // Props: tutorial = { id, username, title, content }
 // Ao tocar, abre a tela /tutorial/[id].
 export default function Tutorial({ tutorial }) {
   const router = useRouter();
+  const [usuario, setUsuario] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const uId = tutorial.usuarioId;
+      if (uId) {
+        const data = await getUsuario(uId);
+        setUsuario(data);
+      }
+    };
+    load();
+  }, [tutorial.usuarioId]);
+
+  const autor = usuario ? usuario.username : ("...");
+
   return (
     <Pressable
       style={styles.card}
       onPress={() => router.push("/tutorial/" + tutorial.id)}
     >
       <Text style={styles.titulo}>{tutorial.title}</Text>
-      <Text style={styles.autor}>por @{tutorial.username}</Text>
+      <Text style={styles.autor}>por @{autor}</Text>
       <Text style={styles.preview} numberOfLines={2}>
         {tutorial.content}
       </Text>

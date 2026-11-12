@@ -1,17 +1,30 @@
+import { useState, useCallback } from "react";
 import { StyleSheet, Text } from "react-native";
+import { useFocusEffect } from "expo-router";
 import Tela from "../components/Tela";
 import Tutorial from "../components/Tutorial";
 import { cores } from "../data/cores";
-import { tutoriais } from "../data/mock";
+import { getTutoriais } from "../utils/apiAccess";
 
 // Aba "Home": feed com todos os tutoriais.
 export default function Index() {
+  const [tutoriais, setTutoriais] = useState(null)
+  
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        const data = await getTutoriais()
+        setTutoriais(data)
+      }
+      load()
+    }, [])
+  )
   return (
     <Tela>
       <Text style={styles.titulo}>Feed</Text>
-      {tutoriais.map((t) => (
+      {tutoriais ? tutoriais.map((t) => (
         <Tutorial key={t.id} tutorial={t} />
-      ))}
+      )) : <Text>Carregando...</Text>}
     </Tela>
   );
 }

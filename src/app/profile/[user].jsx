@@ -10,7 +10,7 @@ export default function PerfilUsuario() {
   const { user } = useLocalSearchParams();
   return (
     <Tela voltar>
-      <Perfil username={user} />
+      <Perfil id={user} />
     </Tela>
   );
 }

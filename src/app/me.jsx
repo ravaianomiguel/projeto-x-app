@@ -1,22 +1,49 @@
 import { Text, StyleSheet } from "react-native";
-import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
+import { useRouter, useFocusEffect } from "expo-router"; 
 import Tela from "../components/Tela";
 import Botao from "../components/Botao";
 import Perfil from "../components/Perfil";
-
-// Aba "Eu": perfil do usuário logado, ou opções de login/cadastro.
-// Por enquanto "logado" é uma constante: troque para true/false para testar
-// as duas versões da tela. Depois será lido de onde guardarmos o login.
-const logado = true;
-const meuUsername = "miguel";
+import { storageGet } from "../utils/secureStore";
+import { useState, useCallback } from "react";
 
 export default function Me() {
   const router = useRouter();
+  const [logado, setLogado] = useState(false);                                                                         
+  const [usuarioId, setUsuarioId] = useState(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      const checkLogin = async () => {
+        const resLogado = await storageGet("logado");
+        if (resLogado.ok && resLogado.val) {
+          setLogado(true);
+          const resId = await storageGet("usuarioId");
+          if (resId.ok) {
+            setUsuarioId(resId.val);
+          }
+        } else {
+          setLogado(false);
+          setUsuarioId(null);
+        }
+        setCarregando(false);
+      };
+      checkLogin();
+    }, [])
+  );
+
+  if (carregando) {
+    return (
+      <Tela>
+        <Text style={styles.texto}>Carregando...</Text>
+      </Tela>
+    );
+  }
 
   if (logado) {
     return (
       <Tela>
-        <Perfil username={meuUsername} proprio />
+        <Perfil id={usuarioId} proprio />
       </Tela>
     );
   }

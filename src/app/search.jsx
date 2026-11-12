@@ -1,22 +1,37 @@
-import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
-import { useState } from "react";
+import { useRouter, useFocusEffect } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
+import { useState, useCallback } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Tela from "../components/Tela";
 import Tutorial from "../components/Tutorial";
 import { cores } from "../data/cores";
-import { tutoriais, usuarios } from "../data/mock";
+import { getTutoriais, getUsuarios } from "../utils/apiAccess";
 
-// Aba "Pesquisar": busca tutoriais por título e usuários por username.
-// O filtro roda no próprio app com os dados falsos; depois vira
-// GET /tutoriais?search=... e GET /usuarios?search=...
 export default function Search() {
   const router = useRouter();
   const [texto, setTexto] = useState("");
-  const [aba, setAba] = useState("tutoriais"); // "tutoriais" ou "usuarios"
+  const [aba, setAba] = useState("tutoriais");
+  const [usuarios, setUsuarios] = useState(null);
+  const [tutoriais, setTutoriais] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        const dataTutoriais = await getTutoriais();
+        const dataUsuarios = await getUsuarios();
+        setTutoriais(dataTutoriais);
+        setUsuarios(dataUsuarios);
+      };
+      load();
+    }, [])
+  );
 
   const busca = texto.toLowerCase();
-  const tutoriaisFiltrados = tutoriais.filter((t) => t.title.toLowerCase().includes(busca));
-  const usuariosFiltrados = usuarios.filter((u) => u.username.toLowerCase().includes(busca));
+  const tutoriaisFiltrados = Array.isArray(tutoriais)
+    ? tutoriais.filter((t) => t.title.toLowerCase().includes(busca))
+    : [];
+  const usuariosFiltrados = Array.isArray(usuarios)
+    ? usuarios.filter((u) => u.username.toLowerCase().includes(busca))
+    : [];
 
   return (
     <Tela>
@@ -43,25 +58,42 @@ export default function Search() {
       </View>
 
       {aba === "tutoriais" &&
-        tutoriaisFiltrados.map((t) => <Tutorial key={t.id} tutorial={t} />)}
-
-      {aba === "usuarios" &&
-        usuariosFiltrados.map((u) => (
-          <Pressable
-            key={u.username}
-            style={styles.usuario}
-            onPress={() => router.push("/profile/" + u.username)}
-          >
-            <View style={styles.avatar} />
-            <View>
-              <Text style={styles.nome}>@{u.username}</Text>
-              <Text style={styles.real}>{u.realname}</Text>
-            </View>
-          </Pressable>
+        (tutoriais ? (
+          <>
+            {tutoriaisFiltrados.map((t) => (
+              <Tutorial key={t.id} tutorial={t} />
+            ))}
+            {tutoriaisFiltrados.length === 0 && (
+              <Text>Nenhum tutorial encontrado.</Text>
+            )}
+          </>
+        ) : (
+          <Text>Carregando...</Text>
         ))}
 
-      {aba === "tutoriais" && tutoriaisFiltrados.length === 0 && <Text>Nenhum tutorial encontrado.</Text>}
-      {aba === "usuarios" && usuariosFiltrados.length === 0 && <Text>Nenhum usuário encontrado.</Text>}
+      {aba === "usuarios" &&
+        (usuarios ? (
+          <>
+            {usuariosFiltrados.map((u) => (
+              <Pressable
+                key={u.id}
+                style={styles.usuario}
+                onPress={() => router.push("/profile/" + u.id)}
+              >
+                <View style={styles.avatar} />
+                <View>
+                  <Text style={styles.nome}>@{u.username}</Text>
+                  <Text style={styles.real}>{u.realname}</Text>
+                </View>
+              </Pressable>
+            ))}
+            {usuariosFiltrados.length === 0 && (
+              <Text>Nenhum usuário encontrado.</Text>
+            )}
+          </>
+        ) : (
+          <Text>Carregando...</Text>
+        ))}
     </Tela>
   );
 }
