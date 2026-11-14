@@ -1,13 +1,16 @@
-import { useRouter, useFocusEffect } from "expo-router"; // [NÃO BÁSICO] ver components/Tela.jsx, nota 2
-import { useState, useCallback } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback, useMemo } from "react";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Tela from "../components/Tela";
 import Tutorial from "../components/Tutorial";
-import { cores } from "../data/cores";
+import { useTema } from "../context/TemaContext";
 import { getTutoriais, getUsuarios } from "../utils/apiAccess";
+import { fotoUri } from "../utils/foto";
 
 export default function Search() {
   const router = useRouter();
+  const { cores } = useTema();
+  const styles = useMemo(() => criarEstilos(cores), [cores]);
   const [texto, setTexto] = useState("");
   const [aba, setAba] = useState("tutoriais");
   const [usuarios, setUsuarios] = useState(null);
@@ -17,7 +20,7 @@ export default function Search() {
     useCallback(() => {
       const load = async () => {
         const dataTutoriais = await getTutoriais();
-        const dataUsuarios = await getUsuarios();
+        const dataUsuarios = await getUsuarios(true);
         setTutoriais(dataTutoriais);
         setUsuarios(dataUsuarios);
       };
@@ -38,6 +41,7 @@ export default function Search() {
       <TextInput
         style={styles.input}
         placeholder="Pesquisar..."
+        placeholderTextColor={cores.textoMuted}
         value={texto}
         onChangeText={setTexto}
       />
@@ -47,13 +51,13 @@ export default function Search() {
           style={[styles.aba, aba === "tutoriais" && styles.abaAtiva]}
           onPress={() => setAba("tutoriais")}
         >
-          <Text>Tutoriais</Text>
+          <Text style={styles.abaTexto}>Tutoriais</Text>
         </Pressable>
         <Pressable
           style={[styles.aba, aba === "usuarios" && styles.abaAtiva]}
           onPress={() => setAba("usuarios")}
         >
-          <Text>Usuários</Text>
+          <Text style={styles.abaTexto}>Usuários</Text>
         </Pressable>
       </View>
 
@@ -64,11 +68,11 @@ export default function Search() {
               <Tutorial key={t.id} tutorial={t} />
             ))}
             {tutoriaisFiltrados.length === 0 && (
-              <Text>Nenhum tutorial encontrado.</Text>
+              <Text style={styles.texto}>Nenhum tutorial encontrado.</Text>
             )}
           </>
         ) : (
-          <Text>Carregando...</Text>
+          <Text style={styles.texto}>Carregando...</Text>
         ))}
 
       {aba === "usuarios" &&
@@ -80,7 +84,11 @@ export default function Search() {
                 style={styles.usuario}
                 onPress={() => router.push("/profile/" + u.id)}
               >
-                <View style={styles.avatar} />
+                {u.photo ? (
+                  <Image source={{ uri: fotoUri(u.photo) }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatar} />
+                )}
                 <View>
                   <Text style={styles.nome}>@{u.username}</Text>
                   <Text style={styles.real}>{u.realname}</Text>
@@ -88,55 +96,64 @@ export default function Search() {
               </Pressable>
             ))}
             {usuariosFiltrados.length === 0 && (
-              <Text>Nenhum usuário encontrado.</Text>
+              <Text style={styles.texto}>Nenhum usuário encontrado.</Text>
             )}
           </>
         ) : (
-          <Text>Carregando...</Text>
+          <Text style={styles.texto}>Carregando...</Text>
         ))}
     </Tela>
   );
 }
 
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: 1,
-    borderColor: "#d4d4d8",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-  },
-  abas: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 12,
-  },
-  aba: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    backgroundColor: "#f4f4f5",
-  },
-  abaAtiva: {
-    backgroundColor: cores.primariaClara,
-  },
-  usuario: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 8,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#e4e4e7",
-  },
-  nome: {
-    color: cores.primaria,
-    fontWeight: "bold",
-  },
-  real: {
-    color: "#71717a",
-  },
-});
+function criarEstilos(cores) {
+  return StyleSheet.create({
+    input: {
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderRadius: 8,
+      padding: 10,
+      marginBottom: 12,
+      color: cores.texto,
+    },
+    texto: {
+      color: cores.texto,
+    },
+    abas: {
+      flexDirection: "row",
+      gap: 8,
+      marginBottom: 12,
+    },
+    aba: {
+      paddingVertical: 6,
+      paddingHorizontal: 14,
+      borderRadius: 16,
+      backgroundColor: cores.superficie,
+    },
+    abaAtiva: {
+      backgroundColor: cores.primariaClara,
+    },
+    abaTexto: {
+      color: cores.texto,
+    },
+    usuario: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 8,
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: cores.superficieAlt,
+    },
+    nome: {
+      color: cores.primaria,
+      fontWeight: "bold",
+    },
+    real: {
+      color: cores.textoMuted,
+    },
+  });
+}

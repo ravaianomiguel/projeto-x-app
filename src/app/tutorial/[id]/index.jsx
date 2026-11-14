@@ -1,16 +1,16 @@
-import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router"; // [NÃO BÁSICO] ver profile/[user].jsx e components/Tela.jsx
-import { useState, useCallback } from "react";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback, useMemo } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Botao from "../../../components/Botao";
 import Tela from "../../../components/Tela";
-import { cores } from "../../../data/cores";
+import { useTema } from "../../../context/TemaContext";
 import { getTutorial, getUsuario, interacoesDoTutorial } from "../../../utils/apiAccess";
 
-// Tutorial completo: rota /tutorial/<id>.
-// Mostra o conteúdo, link para o autor e botão para ver as fotos (interações).
 export default function TutorialPagina() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { cores } = useTema();
+  const styles = useMemo(() => criarEstilos(cores), [cores]);
   const [tutorial, setTutorial] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [interacoes, setInteracoes] = useState(null);
@@ -36,7 +36,7 @@ export default function TutorialPagina() {
   if (carregando) {
     return (
       <Tela voltar>
-        <Text>Carregando...</Text>
+        <Text style={styles.texto}>Carregando...</Text>
       </Tela>
     );
   }
@@ -44,7 +44,7 @@ export default function TutorialPagina() {
   if (!tutorial) {
     return (
       <Tela voltar>
-        <Text>Tutorial não encontrado: {id}</Text>
+        <Text style={styles.texto}>Tutorial não encontrado: {id}</Text>
       </Tela>
     );
   }
@@ -59,25 +59,31 @@ export default function TutorialPagina() {
       </Pressable>
       <Text style={styles.conteudo}>{tutorial.content}</Text>
       <Botao
-        titulo={"Ver fotos de quem fez (" + quantidade + ")"}
-        onPress={() => router.push("/tutorial/" + id + "/pictures")}
+        titulo={"Ver interações (" + quantidade + ")"}
+        onPress={() => router.push("/tutorial/" + id + "/interactions")}
       />
     </Tela>
   );
 }
 
-const styles = StyleSheet.create({
-  titulo: {
-    color: cores.primaria,
-    fontSize: 22,
-    fontWeight: "bold",
-  },
-  autor: {
-    color: cores.primaria,
-    marginVertical: 6,
-  },
-  conteudo: {
-    marginVertical: 12,
-    lineHeight: 22,
-  },
-});
+function criarEstilos(cores) {
+  return StyleSheet.create({
+    titulo: {
+      color: cores.primaria,
+      fontSize: 22,
+      fontWeight: "bold",
+    },
+    autor: {
+      color: cores.primaria,
+      marginVertical: 6,
+    },
+    conteudo: {
+      color: cores.texto,
+      marginVertical: 12,
+      lineHeight: 22,
+    },
+    texto: {
+      color: cores.texto,
+    },
+  });
+}

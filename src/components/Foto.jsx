@@ -1,27 +1,38 @@
-import { View, Text, StyleSheet } from "react-native";
+import { useMemo } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { useTema } from "../context/TemaContext";
+import { fotoUri } from "../utils/foto";
 
-// Uma foto. Por enquanto é só um quadrado cinza (sem imagem real).
-// Props: tamanho (lado do quadrado, padrão 90).
-//
-// Quando houver imagem de verdade, trocar o <View> por:
-//   <Image source={{ uri: foto.picture }} style={{ width: tamanho, height: tamanho }} />
-// (Image também é um componente básico do react-native.)
-export default function Foto({ tamanho = 90 }) {
+export default function Foto({ picture, tamanho = 90 }) {
+  const { cores } = useTema();
+  const styles = useMemo(() => criarEstilos(cores), [cores]);
+
+  if (!picture) {
+    return (
+      <View style={[styles.foto, { width: tamanho, height: tamanho }]}>
+        <Text style={styles.texto}>foto</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.foto, { width: tamanho, height: tamanho }]}>
-      <Text style={styles.texto}>foto</Text>
-    </View>
+    <Image
+      source={{ uri: fotoUri(picture) }}
+      style={[styles.foto, { width: tamanho, height: tamanho }]}
+    />
   );
 }
 
-const styles = StyleSheet.create({
-  foto: {
-    backgroundColor: "#e4e4e7",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  texto: {
-    color: "#71717a",
-  },
-});
+function criarEstilos(cores) {
+  return StyleSheet.create({
+    foto: {
+      backgroundColor: cores.superficieAlt,
+      borderRadius: 8,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    texto: {
+      color: cores.textoMuted,
+    },
+  });
+}

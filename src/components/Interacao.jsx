@@ -1,18 +1,14 @@
-import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver Tela.jsx, nota 2
-import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { cores } from "../data/cores";
+import { useTema } from "../context/TemaContext";
 import { fotosDaInteracao, getTutorial, getUsuario } from "../utils/apiAccess";
 import Foto from "./Foto";
 
-// Uma interação: quem seguiu o tutorial, a descrição e as N fotos do resultado.
-// Usada na tela de fotos do tutorial e no perfil do usuário.
-// Props:
-//   interacao      = { id, tutorialID, username, desc, fotos }
-//   mostrarAutor   = mostra "@username" (link para o perfil)       (padrão: true)
-//   mostrarTutorial = mostra "em: título" (link para o tutorial)   (padrão: true)
 export default function Interacao({ interacao, mostrarAutor = true, mostrarTutorial = true }) {
   const router = useRouter();
+  const { cores } = useTema();
+  const styles = useMemo(() => criarEstilos(cores), [cores]);
   const [tutorial, setTutorial] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [fotos, setFotos] = useState(null);
@@ -53,34 +49,40 @@ export default function Interacao({ interacao, mostrarAutor = true, mostrarTutor
       <View style={styles.fotos}>
         {fotos ? (
           Array.isArray(fotos) && fotos.map((f) => (
-            <Foto key={f.id} />
+            <Foto key={f.id} picture={f.picture} />
           ))
         ) : (
-          <Text>Carregando fotos...</Text>
+          <Text style={styles.carregando}>Carregando fotos...</Text>
         )}
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: "#d4d4d8",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-  },
-  link: {
-    color: cores.primaria,
-    marginBottom: 2,
-  },
-  desc: {
-    marginVertical: 8,
-  },
-  fotos: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-});
+function criarEstilos(cores) {
+  return StyleSheet.create({
+    card: {
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 12,
+    },
+    link: {
+      color: cores.primaria,
+      marginBottom: 2,
+    },
+    desc: {
+      color: cores.texto,
+      marginVertical: 8,
+    },
+    carregando: {
+      color: cores.textoMuted,
+    },
+    fotos: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+  });
+}

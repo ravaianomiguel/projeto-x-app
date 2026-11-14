@@ -1,14 +1,13 @@
-import { useRouter } from "expo-router"; // [NÃO BÁSICO] ver Tela.jsx, nota 2
-import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
-import { cores } from "../data/cores";
+import { useTema } from "../context/TemaContext";
 import { getUsuario } from "../utils/apiAccess";
 
-// Mini tutorial (card). Usado no feed, na pesquisa e no perfil.
-// Props: tutorial = { id, username, title, content }
-// Ao tocar, abre a tela /tutorial/[id].
 export default function Tutorial({ tutorial }) {
   const router = useRouter();
+  const { cores } = useTema();
+  const styles = useMemo(() => criarEstilos(cores), [cores]);
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
@@ -38,26 +37,28 @@ export default function Tutorial({ tutorial }) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: "#d4d4d8",
-    borderLeftWidth: 4,
-    borderLeftColor: cores.primaria,
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 12,
-  },
-  titulo: {
-    color: cores.primaria,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  autor: {
-    color: "#71717a",
-    marginVertical: 2,
-  },
-  preview: {
-    color: "#3f3f46",
-  },
-});
+function criarEstilos(cores) {
+  return StyleSheet.create({
+    card: {
+      borderWidth: 1,
+      borderColor: cores.borda,
+      borderLeftWidth: 4,
+      borderLeftColor: cores.primaria,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 12,
+    },
+    titulo: {
+      color: cores.primaria,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    autor: {
+      color: cores.textoMuted,
+      marginVertical: 2,
+    },
+    preview: {
+      color: cores.textoSecondary,
+    },
+  });
+}
